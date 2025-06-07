@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import pickle
@@ -19,7 +20,7 @@ def load_data():
 df = load_data()
 
 st.sidebar.title("Navigasi Dashboard")
-page = st.sidebar.radio("Pilih Halaman:", ["Anggota Kelompok", "Klasterisasi KMEANS", "Regresi Logistik"])
+page = st.sidebar.radio("Pilih Halaman:", ["Anggota Kelompok", "Klasterisasi KMEANS", "Naive Bayes"])
 
 if page == "Anggota Kelompok":
     st.title('🧑‍💻 Anggota Kelompok 8 🧑‍💻')
@@ -183,73 +184,144 @@ elif page == "Klasterisasi KMEANS":
             st.write('Cluster Centers:', model.cluster_centers_)
         except Exception as e:
                 st.error(f'Terjadi kesalahan dalam menampilkan distribusi cluster: {str(e)}')
+elif page == "Naive Bayes":
+    st.title('🎯 Prediksi Experience Level dengan Naive Bayes')
+    st.write('Aplikasi ini memprediksi Experience Level member gym berdasarkan data yang diinput.')
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        age = st.number_input('Age',
+        min_value=int(df['Age'].min()),
+        max_value=int(df['Age'].max()),
+        value=int(df['Age'].mean()))
+
+        gender = st.selectbox('Gender', ['Male', 'Female'])
+
+        weight = st.number_input('Weight (kg)',
+                min_value=float(df['Weight (kg)'].min()),
+                max_value=float(df['Weight (kg)'].max()),
+                value=float(df['Weight (kg)'].mean()))
+
+        height = st.number_input('Height (m)',
+                min_value=float(df['Height (m)'].min()),
+                max_value=float(df['Height (m)'].max()),
+                value=float(df['Height (m)'].mean()))
+
+        max_bpm = st.number_input('Max BPM',
+                min_value=int(df['Max_BPM'].min()),
+                max_value=int(df['Max_BPM'].max()),
+                value=int(df['Max_BPM'].mean()))
+
+        avg_bpm = st.number_input('Average BPM',
+                min_value=int(df['Avg_BPM'].min()),
+                max_value=int(df['Avg_BPM'].max()),
+                value=int(df['Avg_BPM'].mean()))
+
+        resting_bpm = st.number_input('Resting BPM',
+                min_value=int(df['Resting_BPM'].min()),
+                max_value=int(df['Resting_BPM'].max()),
+                value=int(df['Resting_BPM'].mean()))
 
 
-elif page == "Regresi Logistik":
-    st.title('🎯 Gym Member BMI Prediction Kelompok 8')
-    st.write('Aplikasi ini memprediksi Kategori BMI (Normal atau Obesitas) hanya menggunakan 4 fitur.')
-    st.info("Catatan: Model ini dilatih *setiap kali* tombol prediksi ditekan, menggunakan 4 fitur yang dipilih.")
+    with col2:
+        session_duration = st.number_input('Session Duration (hours)',
+                min_value=float(df['Session_Duration (hours)'].min()),
+                max_value=float(df['Session_Duration (hours)'].max()),
+                value=float(df['Session_Duration (hours)'].mean()))
 
-    def categorize_bmi(bmi):
-        if bmi < 25:
-            return 'Normal'
-        else:
-            return 'Obesitas'
+        calories_burned = st.number_input('Calories Burned',
+                min_value=float(df['Calories_Burned'].min()),
+                max_value=float(df['Calories_Burned'].max()),
+                value=float(df['Calories_Burned'].mean()))
 
-    if 'BMI_Category' not in df.columns:
-        df['BMI_Category'] = df['BMI'].apply(categorize_bmi)
+        workout_type = st.selectbox('Workout Type', ['Cardio', 'Strength', 'HIIT', 'Yoga'])
 
-    features = ['Age', 'Weight (kg)', 'Session_Duration (hours)', 'Workout_Frequency (days/week)']
+        fat_percentage = st.number_input('Fat Percentage',
+                min_value=float(df['Fat_Percentage'].min()),
+                max_value=float(df['Fat_Percentage'].max()),
+                value=float(df['Fat_Percentage'].mean()))
 
-    def train_bmi_model(data_frame, feature_list):
-        X = data_frame[feature_list]
-        y = data_frame['BMI_Category']
+        water_intake = st.number_input('Water Intake (liters)',
+                min_value=float(df['Water_Intake (liters)'].min()),
+                max_value=float(df['Water_Intake (liters)'].max()),
+                value=float(df['Water_Intake (liters)'].mean()))
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        workout_frequency = st.slider('Workout Frequency (days/week)',
+                min_value=int(df['Workout_Frequency (days/week)'].min()),
+                max_value=int(df['Workout_Frequency (days/week)'].max()),
+                value=int(df['Workout_Frequency (days/week)'].mean()))
 
-        model_pipeline = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000, solver='liblinear'))
-        model_pipeline.fit(X_train, y_train)
+        bmi = st.number_input('BMI',
+                min_value=float(df['BMI'].min()),
+                max_value=float(df['BMI'].max()),
+                value=float(df['BMI'].mean()))
 
-        return model_pipeline, X_test, y_test
+    gender_encoded = 1 if gender == 'Male' else 0
+    workout_type_mapping = {'Cardio': 0, 'Strength': 1, 'HIIT': 2, 'Yoga': 3}
+    workout_type_encoded = workout_type_mapping[workout_type]
 
-    age_lr = st.number_input('Usia', min_value=int(df['Age'].min()), max_value=int(df['Age'].max()), value=int(df['Age'].mean()), key='age_lr_4f')
-    weight_lr = st.number_input('Berat Badan (kg)', min_value=float(df['Weight (kg)'].min()), max_value=float(df['Weight (kg)'].max()), value=float(df['Weight (kg)'].mean()), key='weight_lr_4f')
-    session_duration_lr = st.number_input('Durasi Sesi (jam)', min_value=float(df['Session_Duration (hours)'].min()), max_value=float(df['Session_Duration (hours)'].max()), value=float(df['Session_Duration (hours)'].mean()), key='session_lr_4f')
-    workout_frequency_lr = st.number_input('Frekuensi Latihan (hari/minggu)', min_value=int(df['Workout_Frequency (days/week)'].min()), max_value=int(df['Workout_Frequency (days/week)'].max()), value=int(df['Workout_Frequency (days/week)'].mean()), key='freq_lr_4f')
-
-    if st.button('Prediksi Kategori BMI'):
+    if st.button('Prediksi Experience Level'):
         try:
-            lr_model, X_test, y_test = train_bmi_model(df, features)
+            model = joblib.load('logistic_model.pkl')
 
-            input_features = np.array([[age_lr, weight_lr, session_duration_lr, workout_frequency_lr]])
+            input_data = np.array([[
+                age, gender_encoded, weight, height, max_bpm, avg_bpm,
+                resting_bpm, session_duration, calories_burned, workout_type_encoded,
+                fat_percentage, water_intake, workout_frequency, bmi
+            ]])
 
-            prediction = lr_model.predict(input_features)
-            prediction_proba = lr_model.predict_proba(input_features)[0]
+            prediction = model.predict(input_data)[0]
 
-            st.subheader('Hasil Prediksi')
-            if prediction[0] == 'Normal':
-                st.success(f'Kategori BMI yang Diprediksi: **{prediction[0]}**')
-            else:
-                st.error(f'Kategori BMI yang Diprediksi: **{prediction[0]}**')
+            if prediction == 1:
+                st.info('Prediksi Experience Level: **Beginner (1)**')
+                st.write("""
+                **Karakteristik Umum:**
+                - Baru memulai atau belum lama berolahraga secara teratur.
+                - Frekuensi latihan rendah (1-2 kali/minggu) dengan durasi yang lebih pendek.
+                - Intensitas latihan (kalori terbakar, BPM) cenderung lebih rendah.
+                - Fokus pada pembelajaran gerakan dasar dan membangun kebiasaan.
 
-            st.write(f"Probabilitas Normal: {prediction_proba[list(lr_model.classes_).index('Normal')]:.2%}")
-            st.write(f"Probabilitas Obesitas: {prediction_proba[list(lr_model.classes_).index('Obesitas')]:.2%}")
+                **Rekomendasi:**
+                - **Fokus pada Konsistensi:** Latih tubi secara rutin meskipun hanya sebentar untuk membangun kebiasaan.
+                - **Teknik di Atas Beban:** Prioritaskan form dan teknik yang benar untuk menghindari cedera.
+                - **Program Full-Body:** Mulai dengan latihan seluruh tubuh 2-3 kali seminggu.
+                - **Kombinasi Latihan:** Gabungkan latihan kardio ringan (jalan, sepeda statis) dengan latihan kekuatan dasar.
+                - **Dengarkan Tubuh Anda:** Istirahat yang cukup dan jangan memaksakan diri terlalu keras di awal.
+                - **Cari Bimbingan:** Pertimbangkan untuk menyewa personal trainer untuk beberapa sesi awal.
+                """)
+            elif prediction == 2:
+                st.success('Prediksi Experience Level: **Intermediate (2)**')
+                st.write("""
+                **Karakteristik Umum:**
+                - Sudah berolahraga secara konsisten selama beberapa bulan.
+                - Frekuensi dan durasi latihan lebih tinggi dari pemula.
+                - Memiliki pemahaman yang baik tentang teknik dasar dan mulai mencari tantangan baru.
+                - Kemajuan mulai melambat dibandingkan fase pemula (plateau).
 
-            st.markdown("---")
+                **Rekomendasi:**
+                - **Tingkatkan Intensitas:** Terapkan prinsip *progressive overload* dengan menambah beban, repetisi, atau set secara bertahap.
+                - **Variasi Latihan:** Coba jenis latihan baru (seperti HIIT, superset) atau variasikan gerakan untuk menstimulasi otot.
+                - **Split Program:** Pertimbangkan untuk membagi jadwal latihan berdasarkan kelompok otot (misal: upper/lower body split).
+                - **Tetapkan Target Spesifik:** Tentukan tujuan yang jelas, seperti meningkatkan kekuatan pada angkatan tertentu atau daya tahan.
+                - **Perhatikan Nutrisi:** Mulai perhatikan asupan makronutrien (protein, karbohidrat, lemak) untuk mendukung performa dan pemulihan.
+                """)
+            elif prediction == 3:
+                st.warning('Prediksi Experience Level: **Advanced (3)**')
+                st.write("""
+                **Karakteristik Umum:**
+                - Telah berlatih secara konsisten selama bertahun-tahun.
+                - Memiliki frekuensi, durasi, dan intensitas latihan yang tinggi.
+                - Paham mendalam mengenai program latihan, nutrisi, dan pemulihan.
+                - Fokus pada optimalisasi performa dan mencapai tujuan tingkat tinggi.
 
-            st.subheader('Evaluasi Model: Confusion Matrix')
-            y_pred = lr_model.predict(X_test)
-
-            cm = confusion_matrix(y_test, y_pred, labels=lr_model.classes_)
-
-            fig, ax = plt.subplots(figsize=(6, 4))
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax,
-                        xticklabels=lr_model.classes_, yticklabels=lr_model.classes_)
-            plt.ylabel('Aktual')
-            plt.xlabel('Prediksi')
-            plt.title('Confusion Matrix')
-
-            st.pyplot(fig)
+                **Rekomendasi:**
+                - **Periodisasi Latihan:** Terapkan program latihan terstruktur yang membagi siklus latihan ke dalam fase-fase berbeda (misal: hipertrofi, kekuatan, daya tahan).
+                - **Teknik Lanjutan:** Manfaatkan teknik seperti *drop sets*, *rest-pause sets*, atau *plyometrics* untuk menembus plateau.
+                - **Fokus Pemulihan:** Prioritaskan tidur yang berkualitas, nutrisi pasca-latihan, dan teknik pemulihan aktif (misal: foam rolling, stretching).
+                - **Nutrisi Presisi:** Sesuaikan asupan kalori dan makronutrien secara detail untuk mendukung tujuan spesifik (misal: cutting atau bulking).
+                - **Ikut Kompetisi:** Pertimbangkan untuk mengikuti kompetisi atau tantangan untuk menjaga motivasi dan mengukur kemajuan.
+                """)
 
         except Exception as e:
-            st.error(f'Terjadi kesalahan: {str(e)}')
+            st.error(f'Terjadi kesalahan saat memuat model atau melakukan prediksi: {e}')
